@@ -11,6 +11,7 @@ class TripleClient {
     private var email: String? = null
     private var storedData: JSONObject? = null
     private var token: String? = null
+    private var pageNum: Int = 0
 
     init {
         client.newBuilder().readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
@@ -26,14 +27,14 @@ class TripleClient {
         this.token = token
     }
 
+    fun resetPageNum() {
+        pageNum = 0
+    }
+
     fun getList(): JSONObject? {
         val token = this.token ?: return null
-        val listData =
-            FormBody.Builder()
-                .add("page", "0")
-                .add("token", token)
-                .add("language", "zh-CN")
-                .build()
+        val listData = FormBody.Builder().add("page", pageNum.toString()).add("token", token)
+            .add("language", "zh-CN").build()
         val request =
             Request.Builder().url("https://api.tripleuni.com/v4/post/list/all.php").post(listData)
                 .build()
@@ -43,6 +44,7 @@ class TripleClient {
                 if (!response.isSuccessful) throw Exception("Unexpected code $response")
                 val responseData = JSONObject(response.body?.string() ?: "{}")
                 if (responseData.getInt("code") == 200) {
+                    pageNum++
                     return responseData
                 }
                 return null

@@ -40,7 +40,9 @@ fun LoginScreen(navigateToMainScreen: (String) -> Unit) {
     Box(modifier = Modifier.systemBarsPadding()) {
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("TripleUni", fontSize = 48.sp, modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 48.dp))
+            Text(
+                "TripleUni", fontSize = 48.sp, modifier = Modifier.padding(0.dp, 16.dp, 0.dp, 48.dp)
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
