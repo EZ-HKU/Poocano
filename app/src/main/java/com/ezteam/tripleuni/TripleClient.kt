@@ -12,6 +12,8 @@ class TripleClient {
     private var storedData: JSONObject? = null
     private var token: String? = null
     private var pageNum: Int = 0
+    private var tempPostList: JSONObject? = null
+    private var isUpdate = false
 
     init {
         client.newBuilder().readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
@@ -29,6 +31,10 @@ class TripleClient {
 
     fun resetPageNum() {
         pageNum = 0
+    }
+
+    fun resetTempPostList() {
+        tempPostList = null
     }
 
     fun getList(): JSONObject? {
@@ -53,6 +59,26 @@ class TripleClient {
             e.printStackTrace()
             return null
         }
+    }
+
+    fun getTemp(): JSONObject? {
+
+        if (tempPostList == null) {
+            tempPostList = getList()
+            isUpdate = true
+        }
+
+        while (!isUpdate) {
+            Thread.sleep(100)
+        }
+
+        isUpdate = false
+        return tempPostList
+    }
+
+    fun updateTemp() {
+        tempPostList = getList()
+        isUpdate = true
     }
 
     fun sendVerification(email: String): Boolean {

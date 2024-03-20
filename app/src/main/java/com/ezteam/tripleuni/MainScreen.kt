@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 
 fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostItem> {
     // 将字符串解析为JSONObject
-    val jsonObject = client.getList() ?: return postListItem
+    val jsonObject = client.getTemp() ?: return postListItem
 
     // 获取"one_list"的JSONArray
     val oneList = jsonObject.getJSONArray("one_list")
@@ -77,16 +77,18 @@ fun MainScreen() {
         Toast.makeText(context, "获取帖子列表", Toast.LENGTH_SHORT).show()
         CoroutineScope(Dispatchers.IO).launch {
             postListItem = extractPostMessages(postListItem.toMutableList())
+            client.updateTemp()
         }
     }
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }.collect { lastIndex ->
             if (lastIndex != null && lastIndex >= postListItem.size - 1) {
-                Toast.makeText(context, "正在加载更多", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(context, "正在加载更多", Toast.LENGTH_SHORT).show()
                 // 当滚动到最后一个item时，执行加载更多的操作
                 CoroutineScope(Dispatchers.IO).launch {
                     postListItem = extractPostMessages(postListItem.toMutableList())
+                    client.updateTemp()
                 }
             }
         }
@@ -96,8 +98,10 @@ fun MainScreen() {
         FloatingActionButton(onClick = {
             postListItem = listOf()
             client.resetPageNum()
+            client.resetTempPostList()
             CoroutineScope(Dispatchers.IO).launch {
                 postListItem = extractPostMessages(postListItem.toMutableList())
+                client.updateTemp()
             }
         }) {
             // FloatingActionButton的内容
