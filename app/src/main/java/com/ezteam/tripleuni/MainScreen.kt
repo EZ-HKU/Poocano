@@ -2,13 +2,17 @@ package com.ezteam.tripleuni
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -22,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,12 +49,16 @@ fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostIt
         // 获取每个元素（即每个帖子）作为JSONObject
         val post = oneList.getJSONObject(i)
 
-        // 从每个帖子的"data"对象中提取"post_msg"
-        val data = post.getJSONObject("data")
-        val postMsg = data.getString("post_msg_short")
-        val postID = data.getInt("post_id")
+        try {
+            // 从每个帖子的"data"对象中提取"post_msg"
+            val data = post.getJSONObject("data")
+            val postMsg = data.getString("post_msg_short")
+            val postID = data.getInt("post_id")
 
-        postListItem.add(PostItem(postID, postMsg))
+            postListItem.add(PostItem(postID, postMsg))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
     return postListItem
 }
@@ -110,9 +119,20 @@ fun MainScreen() {
                     .padding(16.dp, 0.dp) // 仅保留左右内边距
             ) {
                 items(postListItem) { postItem ->
-                    // LazyColumn中每个item的布局
-                    Text(text = postItem.id.toString())
-                    Text(text = postItem.shortMsg)
+                    Card(
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                        ) {
+                            // LazyColumn中每个item的布局
+                            Text(text = postItem.id.toString(), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text(text = postItem.shortMsg)
+                        }
+                    }
                 }
             }
         }
