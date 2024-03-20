@@ -22,6 +22,37 @@ class TripleClient {
         return token
     }
 
+    fun setToken(token: String) {
+        this.token = token
+    }
+
+    fun getList(): JSONObject? {
+        val token = this.token ?: return null
+        val listData =
+            FormBody.Builder()
+                .add("page", "0")
+                .add("token", token)
+                .add("language", "zh-CN")
+                .build()
+        val request =
+            Request.Builder().url("https://api.tripleuni.com/v4/post/list/all.php").post(listData)
+                .build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw Exception("Unexpected code $response")
+                val responseData = JSONObject(response.body?.string() ?: "{}")
+                if (responseData.getInt("code") == 200) {
+                    return responseData
+                }
+                return null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
     fun sendVerification(email: String): Boolean {
         this.email = email
         val emailData = FormBody.Builder().add("user_email", email).add("language", "zh-CN").build()
@@ -72,9 +103,6 @@ class TripleClient {
         } catch (e: Exception) {
             e.printStackTrace()
             return false
-
         }
-
-
     }
 }

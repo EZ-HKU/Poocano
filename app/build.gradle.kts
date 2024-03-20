@@ -51,8 +51,6 @@ android {
 dependencies {
 
     dependencies {
-        val nav_version = "2.7.7"
-
         // Java language implementation
         implementation(libs.androidx.navigation.fragment)
         implementation(libs.androidx.navigation.ui)
@@ -70,6 +68,8 @@ dependencies {
         // Jetpack Compose Integration
         implementation(libs.androidx.navigation.compose)
     }
+
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
