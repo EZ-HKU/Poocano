@@ -61,6 +61,33 @@ class TripleClient {
         }
     }
 
+    fun getDetail(id: String): JSONObject? {
+
+        val token = this.token ?: return null
+
+        val detailData =
+            FormBody.Builder().add("uni_post_id", id).add("token", token).add("language", "zh-CN")
+                .build()
+        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/get.php")
+            .post(detailData).build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw Exception("Unexpected code $response")
+                val responseData = JSONObject(response.body?.string() ?: "{}")
+                // show responseData in logcat
+                print(responseData.getInt("code"))
+                if (responseData.getInt("code") == 200) {
+                    return responseData
+                }
+                return null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
     fun getTemp(): JSONObject? {
 
         if (tempPostList == null) {
@@ -103,6 +130,7 @@ class TripleClient {
             return false
         }
     }
+
 
     fun verifyCode(vcode: String): Boolean {
         val storedData = this.storedData ?: return false

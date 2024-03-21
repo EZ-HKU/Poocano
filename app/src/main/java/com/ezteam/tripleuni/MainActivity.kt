@@ -15,6 +15,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ezteam.tripleuni.MyAppGlobals.client
 import com.ezteam.tripleuni.ui.theme.TripleuniTheme
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 object MyAppGlobals {
@@ -56,7 +58,19 @@ fun MyApp() {
             }
         }
         composable("main") {
-            MainScreen()
+            MainScreen {uniPostId, id, longMsg ->
+                val encodedPostId = URLEncoder.encode(uniPostId.toString(), StandardCharsets.UTF_8.toString())
+                val encodedId = URLEncoder.encode(id.toString(), StandardCharsets.UTF_8.toString())
+                val encodedLongMsg = URLEncoder.encode(longMsg, StandardCharsets.UTF_8.toString())
+                navController.navigate("post/$encodedPostId/$encodedId/$encodedLongMsg")
+            }
+        }
+        composable("post/{encodedPostId}/{encodedId}/{encodedLongMsg}") {
+            val postID = it.arguments?.getString("encodedPostId") ?: ""
+            val id = it.arguments?.getString("encodedId") ?: ""
+            var longMsg = it.arguments?.getString("encodedLongMsg") ?: ""
+            longMsg = longMsg.replace("%", "%25")
+            PostScreen(postID, id, longMsg)
         }
     }
 }

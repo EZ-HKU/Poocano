@@ -1,5 +1,6 @@
 package com.ezteam.tripleuni
 
+import android.os.Parcelable
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -34,9 +37,12 @@ import com.ezteam.tripleuni.MyAppGlobals.client
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.parcelize.Parcelize
 
 
 fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostItem> {
+
     // 将字符串解析为JSONObject
     val jsonObject = client.getTemp() ?: return postListItem
 
@@ -56,8 +62,9 @@ fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostIt
             val postID = data.getInt("post_id")
             val longMsg = data.getString("post_msg")
             val isComplete = data.getBoolean("post_msg_short_is_complete")
+            val uniPostID = data.getInt("uni_post_id")
 
-            postListItem.add(PostItem(postID, postMsg, longMsg, isComplete))
+            postListItem.add(PostItem(postID, postMsg, longMsg, isComplete, uniPostID))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -65,19 +72,33 @@ fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostIt
     return postListItem
 }
 
-data class PostItem(val id: Int, val shortMsg: String, val longMsg: String, val isComplete: Boolean)
+@Parcelize
+data class PostItem(
+    val id: Int,
+    val shortMsg: String,
+    val longMsg: String,
+    val isComplete: Boolean,
+    val uniPostID: Int
+) : Parcelable
 
 @Composable
-fun MainScreen() {
-    var postListItem by remember { mutableStateOf(listOf<PostItem>()) }
+fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
+    var postListItem by rememberSaveable { mutableStateOf(listOf<PostItem>()) }
     val context = LocalContext.current // 获取当前 Composable 的 Context
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    // 默认值设为true，表示首次进入页面时执行
+    val shouldExecuteEffect = rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        Toast.makeText(context, "获取帖子列表", Toast.LENGTH_SHORT).show()
-        CoroutineScope(Dispatchers.IO).launch {
-            postListItem = extractPostMessages(postListItem.toMutableList())
-            client.updateTemp()
+        if (shouldExecuteEffect.value) {
+            shouldExecuteEffect.value = false
+            Toast.makeText(context, "获取帖子列表", Toast.LENGTH_SHORT).show()
+            CoroutineScope(Dispatchers.IO).launch {
+                postListItem = extractPostMessages(postListItem.toMutableList())
+                client.updateTemp()
+            }
         }
     }
 
@@ -96,11 +117,19 @@ fun MainScreen() {
 
     Scaffold(floatingActionButton = {
         FloatingActionButton(onClick = {
-            postListItem = listOf()
             client.resetPageNum()
             client.resetTempPostList()
+            Toast.makeText(context, "正在刷新", Toast.LENGTH_SHORT).show()
+            coroutineScope.launch {
+                withContext(Dispatchers.Main) {
+                    listState.scrollToItem(0)
+                }
+            }
             CoroutineScope(Dispatchers.IO).launch {
-                postListItem = extractPostMessages(postListItem.toMutableList())
+                postListItem = extractPostMessages(mutableListOf())
+                withContext(Dispatchers.Main) {
+                    listState.scrollToItem(0)
+                }
                 client.updateTemp()
             }
         }) {
@@ -114,7 +143,7 @@ fun MainScreen() {
                 .padding(innerPadding) // 应用从Scaffold获得的innerPadding
         ) {
             Text(
-                text = "全部帖子",
+                text = "Poocano",
                 fontSize = 24.sp,
                 modifier = Modifier.padding(16.dp, 16.dp, 0.dp, 16.dp)
             )
@@ -126,16 +155,18 @@ fun MainScreen() {
                     .padding(16.dp, 0.dp) // 仅保留左右内边距
             ) {
                 items(postListItem) { postItem ->
-                    var text by remember {
-                        mutableStateOf(
-                            postItem.shortMsg
-                        )
-                    }
+                    var text by remember { mutableStateOf(postItem.shortMsg) }
                     var isComplete by remember { mutableStateOf(postItem.isComplete) }
                     Card(modifier = Modifier
                         .padding(vertical = 8.dp)
                         .fillMaxWidth()
-                        .clickable { text = postItem.longMsg; isComplete = true }) {
+                        .clickable {
+
+                            text = postItem.longMsg
+                            if (isComplete) navigateToPostScreen(postItem.uniPostID, postItem.id, text)
+
+                            isComplete = true
+                        }) {
 
                         Column(
                             modifier = Modifier
@@ -171,5 +202,5 @@ fun MainScreen() {
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MainScreen()
+    MainScreen(navigateToPostScreen = { _, _, _ -> })
 }
