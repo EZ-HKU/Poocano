@@ -198,7 +198,7 @@ fun PostScreen(
     var commentListItem by remember { mutableStateOf(CommentListItem()) }
 
     LaunchedEffect(Unit) {
-        delay(500)
+        delay(200)
         CoroutineScope(
             Dispatchers.IO
         ).launch {
@@ -226,8 +226,6 @@ fun PostScreen(
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-
-
                 Text(text = decodedLongMsg, modifier = Modifier.padding(16.dp, 0.dp))
 
                 HorizontalDivider(
