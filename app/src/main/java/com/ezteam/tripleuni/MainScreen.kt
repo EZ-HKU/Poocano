@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -88,6 +89,7 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
     val context = LocalContext.current // 获取当前 Composable 的 Context
     val listState = rememberLazyListState()
     val isRefreshState = remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // 默认值设为true，表示首次进入页面时执行
     val shouldExecuteEffect = rememberSaveable { mutableStateOf(true) }
@@ -143,14 +145,15 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
                     client.resetPageNum()
                     client.resetTempPostList()
                     Toast.makeText(context, "正在刷新", Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        postListItem = extractPostMessages(mutableListOf())
+                    }
                     CoroutineScope(Dispatchers.IO).launch {
                         postListItem = extractPostMessages(mutableListOf())
-                        withContext(Dispatchers.Main) {
-                            listState.scrollToItem(0)
-                            isRefreshState.value = false
-                        }
+                        isRefreshState.value = false
                         client.updateTemp()
                     }
+
 
                 }) {
                 LazyColumn(
