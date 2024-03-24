@@ -37,7 +37,7 @@ class TripleClient {
         tempPostList = null
     }
 
-    fun getList(): JSONObject? {
+    private fun getList(): JSONObject? {
         val token = this.token ?: return null
         val listData = FormBody.Builder().add("page", pageNum.toString()).add("token", token)
             .add("language", "zh-CN").build()
@@ -125,6 +125,28 @@ class TripleClient {
                 }
                 return false
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    fun sendComment(content: String, postId: String): Boolean {
+        val commentData = FormBody.Builder().add("uni_post_id", postId).add("comment_msg", content)
+            .add("user_is_real_name", "false").add("token", this.token!!).add("language", "zh-CN")
+        val request = Request.Builder().url("https://api.tripleuni.com/v4/comment/post.php")
+            .post(commentData.build()).build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw Exception("Unexpected code $response")
+                val responseData = JSONObject(response.body?.string() ?: "{}")
+                return responseData.getInt("code") == 200
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+
         } catch (e: Exception) {
             e.printStackTrace()
             return false

@@ -69,7 +69,6 @@ fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostIt
             val uniPostID = data.getInt("uni_post_id")
             val commentNum = data.getInt("post_comment_num")
 
-
             postListItem.add(PostItem(postID, postMsg, longMsg, isComplete, uniPostID, commentNum))
         } catch (e: Exception) {
             e.printStackTrace()
@@ -161,7 +160,6 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
                         client.updateTemp()
                     }
 
-
                 }) {
                 LazyColumn(
                     state = listState, modifier = Modifier
@@ -206,7 +204,7 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
                                             modifier = Modifier.align(Alignment.CenterVertically)
                                         )
                                         Text(
-                                            text = postItemOrigin.uniPostID.toString(),
+                                            text = postItemOrigin.commentNum.toString(),
                                             fontSize = 18.sp,
                                             fontWeight = FontWeight.Bold
                                         )

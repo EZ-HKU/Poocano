@@ -12,8 +12,8 @@ android {
         applicationId = "com.ezteam.tripleuni"
         minSdk = 28
         targetSdk = 34
-        versionCode = 7
-        versionName = "0.3.4"
+        versionCode = 8
+        versionName = "0.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.okhttp)
     implementation(libs.accompanist.swiperefresh)
+    implementation (libs.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
