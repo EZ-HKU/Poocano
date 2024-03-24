@@ -4,6 +4,8 @@ import android.os.Parcelable
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -64,8 +67,10 @@ fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostIt
             val longMsg = data.getString("post_msg")
             val isComplete = data.getBoolean("post_msg_short_is_complete")
             val uniPostID = data.getInt("uni_post_id")
+            val commentNum = data.getInt("post_comment_num")
 
-            postListItem.add(PostItem(postID, postMsg, longMsg, isComplete, uniPostID))
+
+            postListItem.add(PostItem(postID, postMsg, longMsg, isComplete, uniPostID, commentNum))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -80,8 +85,10 @@ data class PostItem(
     val longMsg: String,
     var isComplete: Boolean,
     val uniPostID: Int,
-    var showMsg: String = shortMsg
-) : Parcelable
+    val commentNum: Int,
+    var showMsg: String = shortMsg,
+
+    ) : Parcelable
 
 @Composable
 fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
@@ -185,12 +192,27 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
                                     .padding(16.dp)
                                     .fillMaxWidth()
                             ) {
-                                // LazyColumn中每个item的布局
-                                Text(
-                                    text = postItemOrigin.id.toString(),
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row {
+                                    Text(
+                                        text = postItemOrigin.id.toString(),
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(Modifier.weight(1f))
+                                    Row {
+                                        Icon(
+                                            Icons.Outlined.Notifications,
+                                            contentDescription = "Comment",
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                        Text(
+                                            text = postItemOrigin.uniPostID.toString(),
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                }
 
                                 Text(text = postItemOrigin.showMsg)
 
