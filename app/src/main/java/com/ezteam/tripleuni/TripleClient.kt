@@ -153,6 +153,36 @@ class TripleClient {
         }
     }
 
+    fun postPoster(
+        content: String,
+        topic: String,
+        real: String,
+        public: String,
+        uni: String
+    ): Boolean {
+        val postData = FormBody.Builder()
+            .add("post_msg", content)
+            .add("post_topic", topic)
+            .add("user_is_real_name", real)
+            .add("post_public", public)
+            .add("post_is_uni",uni)
+            .add("post_image", "[]")
+            .add("token", this.token!!)
+            .add("language", "zh-CN")
+        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/post.php")
+            .post(postData.build()).build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw Exception("Unexpected code $response")
+                val responseData = JSONObject(response.body?.string() ?: "{}")
+                return responseData.getInt("code") == 200
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
 
     fun verifyCode(vcode: String): Boolean {
         val storedData = this.storedData ?: return false

@@ -3,6 +3,8 @@ package com.ezteam.tripleuni
 import android.os.Parcelable
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +34,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +44,8 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
@@ -90,16 +95,20 @@ data class PostItem(
     ) : Parcelable
 
 @Composable
-fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
+fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditPostScreen: () -> Unit){
     var postListItem by rememberSaveable { mutableStateOf(listOf<PostItem>()) }
     val context = LocalContext.current // 获取当前 Composable 的 Context
     val listState = rememberLazyListState()
     val isRefreshState = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val interactionSource = remember { MutableInteractionSource() }
+    val viewConfiguration = LocalViewConfiguration.current
+
 
     // 默认值设为true，表示首次进入页面时执行
     val shouldExecuteEffect = rememberSaveable { mutableStateOf(true) }
 
+    // 首次进入页面时获取帖子列表
     LaunchedEffect(Unit) {
         if (shouldExecuteEffect.value) {
             shouldExecuteEffect.value = false
@@ -111,6 +120,7 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
         }
     }
 
+    // 滚动到底部时加载更多帖子
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }.collect { lastIndex ->
             if (lastIndex != null && lastIndex >= postListItem.size - 1) {
@@ -122,15 +132,38 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
         }
     }
 
-    Scaffold(floatingActionButton = {
-        FloatingActionButton(onClick = {
-            CoroutineScope(Dispatchers.IO).launch {
-                withContext(Dispatchers.Main) {
-                    listState.scrollToItem(0)
+    // 用于判断是否发生了长按事件
+    LaunchedEffect(interactionSource) {
+        var isLongClick = false
+
+        interactionSource.interactions.collectLatest { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> {
+                    isLongClick = false
+                    delay(viewConfiguration.longPressTimeoutMillis)
+                    isLongClick = true
+                    Toast.makeText(context, "WoW，原来可以发Poo了～", Toast.LENGTH_SHORT).show()
+                    navigateToEditPostScreen()
+                }
+
+                is PressInteraction.Release -> {
+                    if (isLongClick.not()) {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            withContext(Dispatchers.Main) {
+                                listState.scrollToItem(0)
+                            }
+                        }
+                    }
+                }
+                is PressInteraction.Cancel -> {
+                    isLongClick = false
                 }
             }
-        }) {
-            // FloatingActionButton的内容
+        }
+    }
+
+    Scaffold(floatingActionButton = {
+        FloatingActionButton(interactionSource = interactionSource, onClick = { }) {
             Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Top")
         }
     }, content = { innerPadding ->
@@ -237,5 +270,5 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MainScreen(navigateToPostScreen = { _, _, _ -> })
+    MainScreen(navigateToPostScreen = { _, _, _ -> }, navigateToEditPostScreen = {})
 }

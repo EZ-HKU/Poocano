@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -138,10 +139,10 @@ fun CommentItem(commentItem: CommentItem, content: @Composable () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(0.dp, 0.dp, 16.dp, 0.dp)
             .clickable { },
+        shape = RoundedCornerShape(0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Red.copy(alpha = 0f) // 使用带有透明度的颜色作为背景色
+            containerColor = Color.Red.copy(alpha = 0f) // 使用带有透明度的颜色作为背景色shape
         )
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -293,7 +294,7 @@ fun PostScreen(
                 )
             }
             Column(
-                modifier = Modifier.verticalScroll(rememberScrollState())
+                modifier = Modifier.verticalScroll(rememberScrollState()).padding(0.dp, 0.dp, 16.dp, 0.dp)
             ) {
                 Text(text = decodedLongMsg, modifier = Modifier.padding(16.dp, 0.dp))
 

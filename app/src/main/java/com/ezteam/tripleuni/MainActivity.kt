@@ -58,12 +58,18 @@ fun MyApp() {
             }
         }
         composable("main") {
-            MainScreen {uniPostId, id, longMsg ->
-                val encodedPostId = URLEncoder.encode(uniPostId.toString(), StandardCharsets.UTF_8.toString())
-                val encodedId = URLEncoder.encode(id.toString(), StandardCharsets.UTF_8.toString())
-                val encodedLongMsg = URLEncoder.encode(longMsg, StandardCharsets.UTF_8.toString())
-                navController.navigate("post/$encodedPostId/$encodedId/$encodedLongMsg")
-            }
+            MainScreen(
+                navigateToPostScreen = { uniPostId, id, longMsg ->
+                    val encodedPostId =
+                        URLEncoder.encode(uniPostId.toString(), StandardCharsets.UTF_8.toString())
+                    val encodedId = URLEncoder.encode(id.toString(), StandardCharsets.UTF_8.toString())
+                    val encodedLongMsg = URLEncoder.encode(longMsg, StandardCharsets.UTF_8.toString())
+                    navController.navigate("post/$encodedPostId/$encodedId/$encodedLongMsg")
+                },
+                navigateToEditPostScreen = {
+                    navController.navigate("edit")
+                }
+            )
         }
         composable("post/{encodedPostId}/{encodedId}/{encodedLongMsg}") {
             val postID = it.arguments?.getString("encodedPostId") ?: ""
@@ -71,6 +77,9 @@ fun MyApp() {
             var longMsg = it.arguments?.getString("encodedLongMsg") ?: ""
             longMsg = longMsg.replace("%", "%25")
             PostScreen(postID, id, longMsg)
+        }
+        composable("edit") {
+            EditPostScreen(navController)
         }
     }
 }
