@@ -48,7 +48,7 @@ class TripleClient {
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw Exception("Unexpected code $response")
-                val responseData = JSONObject(response.body?.string() ?: "{}")
+                val responseData = JSONObject(response.body.string())
                 if (responseData.getInt("code") == 200) {
                     pageNum++
                     return responseData
@@ -74,7 +74,7 @@ class TripleClient {
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw Exception("Unexpected code $response")
-                val responseData = JSONObject(response.body?.string() ?: "{}")
+                val responseData = JSONObject(response.body.string())
                 // show responseData in logcat
                 print(responseData.getInt("code"))
                 if (responseData.getInt("code") == 200) {
@@ -118,7 +118,7 @@ class TripleClient {
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw Exception("Unexpected code $response")
-                val responseData = JSONObject(response.body?.string() ?: "{}")
+                val responseData = JSONObject(response.body.string())
                 if (responseData.getInt("code") == 200) {
                     storedData = responseData
                     return true
@@ -140,7 +140,7 @@ class TripleClient {
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw Exception("Unexpected code $response")
-                val responseData = JSONObject(response.body?.string() ?: "{}")
+                val responseData = JSONObject(response.body.string())
                 return responseData.getInt("code") == 200
             }
         } catch (e: Exception) {
@@ -175,7 +175,7 @@ class TripleClient {
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw Exception("Unexpected code $response")
-                val responseData = JSONObject(response.body?.string() ?: "{}")
+                val responseData = JSONObject(response.body.string())
                 return responseData.getInt("code") == 200
             }
         } catch (e: Exception) {
@@ -199,7 +199,7 @@ class TripleClient {
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw Exception("Unexpected code $response")
-                val responseData = JSONObject(response.body?.string() ?: "{}")
+                val responseData = JSONObject(response.body.string())
                 print(responseData)
                 if (responseData.getInt("code") != 200) {
                     return false

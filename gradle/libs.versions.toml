@@ -1,17 +1,17 @@
 [versions]
 accompanistSwiperefresh = "0.18.0"
 agp = "8.5.0-alpha02"
-kotlin = "1.9.0"
+kotlin = "1.9.23"
 coreKtx = "1.12.0"
-junit = "4.13.2"
-junitVersion = "1.1.5"
+junit = "5.10.2"
+junitVersion = "1.10.2"
 espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.7.0"
 activityCompose = "1.8.2"
 composeBom = "2024.03.00"
 material3 = "1.2.1"
 navigationFragment = "2.7.7"
-okhttp = "4.12.0"
+okhttp = "5.0.0-alpha.12"
 
 [libraries]
 accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefresh" }
