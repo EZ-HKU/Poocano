@@ -200,6 +200,9 @@ fun MainScreen(
     var showMenu by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    val versionCode = packageInfo.longVersionCode
+    val versionName = packageInfo.versionName
 
 
     val annotatedLinkString = buildAnnotatedString {
@@ -234,8 +237,7 @@ fun MainScreen(
         if (shouldExecuteEffect.value) {
             shouldExecuteEffect.value = false
             Toast.makeText(context, "获取帖子列表", Toast.LENGTH_SHORT).show()
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            val versionCode = packageInfo.longVersionCode
+
             CoroutineScope(Dispatchers.IO).launch {
                 val latestVersionCode = getLatestVersion()
                 if (latestVersionCode > versionCode.toInt()) {
@@ -562,7 +564,7 @@ fun MainScreen(
                 ) {
                     Text("Poocano", style = MaterialTheme.typography.titleLarge)
                     Text(
-                        "v0.5.2",
+                        versionName,
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.alpha(0.6f)
                     )
