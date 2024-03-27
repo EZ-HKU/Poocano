@@ -15,14 +15,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,15 +37,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.ezteam.tripleuni.MyAppGlobals.client
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.ezteam.tripleuni.MyAppGlobals.client
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPostScreen(navController: NavController) {
     var postText by remember { mutableStateOf(TextFieldValue()) }
@@ -50,47 +55,56 @@ fun EditPostScreen(navController: NavController) {
     var selectedSchool by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    Scaffold(floatingActionButton = {
-        FloatingActionButton(onClick = {
-            CoroutineScope(Dispatchers.IO).launch {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "正在发送", Toast.LENGTH_SHORT).show()
-                }
-                val isSuccess = client.postPoster(
-                    postText.text,
-                    selectedTopic,
-                    selectedAuthenticity,
-                    selectedVisibility,
-                    selectedSchool
-                )
-                if (isSuccess) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "发送成功", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("New Poo~") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "发送失败", Toast.LENGTH_SHORT).show()
+                },
+                actions = {
+                    IconButton(onClick = { /* doSomething() */ }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "More")
                     }
                 }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                CoroutineScope(Dispatchers.IO).launch {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "正在发送", Toast.LENGTH_SHORT).show()
+                    }
+                    val isSuccess = client.postPoster(
+                        postText.text,
+                        selectedTopic,
+                        selectedAuthenticity,
+                        selectedVisibility,
+                        selectedSchool
+                    )
+                    if (isSuccess) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "发送成功", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "发送失败", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }) {
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
             }
-        }) {
-            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
-        }
-    }, content = { innerPadding ->
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            val screenHeight = maxHeight
-
-            Column {
-                Text(
-                    text = "New Poo~",
-                    fontSize = 24.sp,
-                    modifier = Modifier.padding(16.dp, 16.dp, 0.dp, 16.dp)
-                )
+        }, content = { innerPadding ->
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                val screenHeight = maxHeight
 
                 Column(modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 0.dp)) {
                     // Post Text Field
@@ -133,10 +147,12 @@ fun EditPostScreen(navController: NavController) {
                                 DropdownOption("实名", "true")
                             ), selectedAuthenticity
                         ) { selectedAuthenticity = it }
-                        DropdownSelector("范围", listOf(
-                            DropdownOption("本校", "false"),
-                            DropdownOption("Uni", "true")
-                        ), selectedSchool) {
+                        DropdownSelector(
+                            "范围", listOf(
+                                DropdownOption("本校", "false"),
+                                DropdownOption("Uni", "true")
+                            ), selectedSchool
+                        ) {
                             selectedSchool = it
                         }
                     }
@@ -144,8 +160,7 @@ fun EditPostScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-        }
-    })
+        })
 }
 
 data class DropdownOption(val label: String, val value: String)

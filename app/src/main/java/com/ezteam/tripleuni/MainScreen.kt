@@ -18,16 +18,32 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Card
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -101,6 +117,20 @@ fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostIt
     return postListItem
 }
 
+fun getProfile(profileListItem: MutableList<ProfileItem>): MutableList<ProfileItem> {
+    val jsonObject = client.getProfile() ?: return mutableListOf()
+    val data = jsonObject.getJSONObject("user_info")
+
+    val followCount = data.getInt("follow_count")
+    val postCount = data.getInt("post_count")
+    val schoolLabel = data.getString("user_school_label")
+    val serial = data.getString("user_serial")
+
+    profileListItem.add(ProfileItem(followCount, postCount, schoolLabel, serial))
+
+    return profileListItem
+}
+
 @Parcelize
 data class PostItem(
     val id: Int,
@@ -114,11 +144,18 @@ data class PostItem(
     var showMsg: String = shortMsg
 ) : Parcelable
 
+@Parcelize
+data class ProfileItem(
+    val followCount: Int, val postCount: Int, val schoolLabel: String, val serial: String
+) : Parcelable
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditPostScreen: () -> Unit
 ) {
     var postListItem by rememberSaveable { mutableStateOf(listOf<PostItem>()) }
+    var profileListItem by rememberSaveable { mutableStateOf(listOf<ProfileItem>()) }
     val context = LocalContext.current // 获取当前 Composable 的 Context
     val listState = rememberLazyListState()
     val isRefreshState = remember { mutableStateOf(false) }
@@ -126,6 +163,9 @@ fun MainScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val viewConfiguration = LocalViewConfiguration.current
     val currentTimestamp = Instant.now().epochSecond
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val sideItems = listOf("全部", "情感", "随写", "学业", "求职", "美食", "跳蚤")
+    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
 
     // 默认值设为true，表示首次进入页面时执行
     val shouldExecuteEffect = rememberSaveable { mutableStateOf(true) }
@@ -139,7 +179,11 @@ fun MainScreen(
                 postListItem = extractPostMessages(postListItem.toMutableList())
                 client.updateTemp()
             }
+            CoroutineScope(Dispatchers.IO).launch {
+                profileListItem = getProfile(profileListItem.toMutableList())
+            }
         }
+
     }
 
     // 滚动到底部时加载更多帖子
@@ -185,128 +229,212 @@ fun MainScreen(
         }
     }
 
-    Scaffold(floatingActionButton = {
-        FloatingActionButton(interactionSource = interactionSource, onClick = { }) {
-            Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Top")
+    ModalNavigationDrawer(drawerContent = {
+        ModalDrawerSheet {
+            Column(modifier = Modifier.padding(16.dp, 0.dp)) {
+                var serial = ""
+                var followCount = 0
+                var postCount = 0
+                var schoolLabel = ""
+                profileListItem.forEach {
+                    serial = it.serial
+                    followCount = it.followCount
+                    postCount = it.postCount
+                    schoolLabel = it.schoolLabel
+                }
+                Text("你好，$serial", fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                Text("今天想发点什么呢？", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                HorizontalDivider(modifier = Modifier.padding(0.dp, 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Create,
+                        contentDescription = "Post Number",
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .size(20.dp)
+                    )
+                    Text(
+                        text = "$postCount", fontSize = 16.sp, fontWeight = FontWeight.Normal
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Follow Number",
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .size(20.dp)
+                    )
+                    Text(
+                        text = "$followCount", fontSize = 16.sp, fontWeight = FontWeight.Normal
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        Icons.Outlined.Home,
+                        contentDescription = "School",
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .size(20.dp)
+                    )
+                    Text(
+                        text = schoolLabel, fontSize = 16.sp, fontWeight = FontWeight.Normal
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(onClick = { /*TODO*/ }) {
+                        Text("我的")
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(0.dp, 8.dp))
+                sideItems.forEachIndexed { index, item ->
+                    NavigationDrawerItem(label = {
+                        Text(item)
+                    }, selected = index == selectedItemIndex, onClick = {
+                        selectedItemIndex = index
+                        scope.launch { drawerState.close() }
+                    })
+                }
+            }
         }
-    }, content = { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding) // 应用从Scaffold获得的innerPadding
-        ) {
-            Text(
-                text = "Poocano",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(16.dp, 16.dp, 0.dp, 16.dp)
-            )
-
-            SwipeRefresh(state = rememberSwipeRefreshState(isRefreshing = isRefreshState.value),
-                onRefresh = {
-                    isRefreshState.value = true
-                    client.resetPageNum()
-                    client.resetTempPostList()
-                    Toast.makeText(context, "正在刷新", Toast.LENGTH_SHORT).show()
+    }, drawerState = drawerState) {
+        Scaffold(topBar = {
+            TopAppBar(title = { Text("Poocano") }, navigationIcon = {
+                IconButton(onClick = {
                     scope.launch {
-                        postListItem = extractPostMessages(mutableListOf())
+                        drawerState.open()
                     }
-                    CoroutineScope(Dispatchers.IO).launch {
-                        postListItem = extractPostMessages(mutableListOf())
-                        isRefreshState.value = false
-                        client.updateTemp()
-                    }
-
                 }) {
-                LazyColumn(
-                    state = listState, modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp, 0.dp)
-                ) {
-                    items(postListItem) { postItem ->
+                    Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                }
+            }, actions = {
+                IconButton(onClick = { }) {
+                    Icon(Icons.Filled.Search, contentDescription = "Search")
+                }
+                IconButton(onClick = { }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                }
+            })
 
-                        var postItemOrigin by remember { mutableStateOf(postItem) }
+        }, floatingActionButton = {
+            FloatingActionButton(interactionSource = interactionSource, onClick = { }) {
+                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Top")
+            }
+        }, content = { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding) // 应用从Scaffold获得的innerPadding
+            ) {
+                SwipeRefresh(state = rememberSwipeRefreshState(isRefreshing = isRefreshState.value),
+                    onRefresh = {
+                        isRefreshState.value = true
+                        client.resetPageNum()
+                        client.resetTempPostList()
+                        Toast.makeText(context, "正在刷新", Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            postListItem = extractPostMessages(mutableListOf())
+                        }
+                        CoroutineScope(Dispatchers.IO).launch {
+                            postListItem = extractPostMessages(mutableListOf())
+                            isRefreshState.value = false
+                            client.updateTemp()
+                        }
 
-                        Card(modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .fillMaxWidth()
-                            .clickable {
+                    }) {
+                    LazyColumn(
+                        state = listState, modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp, 0.dp)
+                    ) {
+                        items(postListItem) { postItem ->
 
-                                if (postItemOrigin.isComplete) navigateToPostScreen(
-                                    postItemOrigin.uniPostID,
-                                    postItemOrigin.id,
-                                    postItemOrigin.longMsg
-                                )
-                                postItemOrigin = postItemOrigin.copy(
-                                    isComplete = true, showMsg = postItemOrigin.longMsg
-                                )
-                            }) {
+                            var postItemOrigin by remember { mutableStateOf(postItem) }
 
-                            Column(
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .fillMaxWidth()
-                            ) {
-                                Row {
+                            Card(modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .fillMaxWidth()
+                                .clickable {
+
+                                    if (postItemOrigin.isComplete) navigateToPostScreen(
+                                        postItemOrigin.uniPostID,
+                                        postItemOrigin.id,
+                                        postItemOrigin.longMsg
+                                    )
+                                    postItemOrigin = postItemOrigin.copy(
+                                        isComplete = true, showMsg = postItemOrigin.longMsg
+                                    )
+                                }) {
+
+                                Column(
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                        .fillMaxWidth()
+                                ) {
                                     Row {
-                                        Text(
-                                            text = postItemOrigin.id.toString(),
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        if (currentTimestamp - postItemOrigin.postTimestamp > 86400) {
-                                            Spacer(modifier = Modifier.width(8.dp))
+                                        Row {
                                             Text(
-                                                text = "你可能错过", fontSize = 12.sp,
-                                                modifier = Modifier.alpha(0.6f)
+                                                text = postItemOrigin.id.toString(),
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            if (currentTimestamp - postItemOrigin.postTimestamp > 86400) {
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = "你可能错过",
+                                                    fontSize = 12.sp,
+                                                    modifier = Modifier.alpha(0.6f)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(Modifier.weight(1f))
+
+                                        Row {
+                                            Icon(
+                                                Icons.Outlined.Notifications,
+                                                contentDescription = "Comment",
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterVertically)
+                                                    .size(20.dp)
+                                            )
+                                            Text(
+                                                text = postItemOrigin.commentNum.toString(),
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Normal
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Outlined.FavoriteBorder,
+                                                contentDescription = "Follow",
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterVertically)
+                                                    .size(20.dp)
+                                            )
+                                            Text(
+                                                text = postItemOrigin.followNum.toString(),
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Normal
                                             )
                                         }
                                     }
 
-                                    Spacer(Modifier.weight(1f))
-
-                                    Row {
-                                        Icon(
-                                            Icons.Outlined.Notifications,
-                                            contentDescription = "Comment",
-                                            modifier = Modifier.align(Alignment.CenterVertically).size(20.dp)
-                                        )
+                                    Text(text = postItemOrigin.showMsg)
+                                    if (!postItemOrigin.isComplete) {
                                         Text(
-                                            text = postItemOrigin.commentNum.toString(),
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Normal
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Icon(
-                                            Icons.Outlined.FavoriteBorder,
-                                            contentDescription = "Follow",
-                                            modifier = Modifier.align(Alignment.CenterVertically).size(20.dp)
-                                        )
-                                        Text(
-                                            text = postItemOrigin.followNum.toString(),
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Normal
+                                            "...",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.align(
+                                                Alignment.End
+                                            )
                                         )
                                     }
-                                }
-
-                                Text(text = postItemOrigin.showMsg)
-                                if (!postItemOrigin.isComplete) {
-                                    Text(
-                                        "...",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.align(
-                                            Alignment.End
-                                        )
-                                    )
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-    })
+        })
+    }
 }
 
 

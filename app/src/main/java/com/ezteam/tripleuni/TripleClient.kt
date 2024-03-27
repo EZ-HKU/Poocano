@@ -61,6 +61,28 @@ class TripleClient {
         }
     }
 
+    fun getProfile(): JSONObject? {
+        val token = this.token ?: return null
+        val profileData = FormBody.Builder().add("token", token).add("language", "zh-CN").build()
+        val request = Request.Builder().url("https://api.tripleuni.com/v4/user/profile/get.php")
+            .post(profileData).build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw Exception("Unexpected code $response")
+                val responseData = JSONObject(response.body.string())
+                if (responseData.getInt("code") == 200) {
+                    return responseData
+                }
+                return null
+            }
+        }
+        catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
     fun getDetail(id: String): JSONObject? {
 
         val token = this.token ?: return null

@@ -76,7 +76,7 @@ fun MyApp() {
             val id = it.arguments?.getString("encodedId") ?: ""
             var longMsg = it.arguments?.getString("encodedLongMsg") ?: ""
             longMsg = longMsg.replace("%", "%25")
-            PostScreen(postID, id, longMsg)
+            PostScreen(postID, id, longMsg, navController)
         }
         composable("edit") {
             EditPostScreen(navController)
