@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
@@ -33,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +53,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
+import java.time.Instant
 
 
 fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostItem> {
@@ -73,8 +78,22 @@ fun extractPostMessages(postListItem: MutableList<PostItem>): MutableList<PostIt
             val isComplete = data.getBoolean("post_msg_short_is_complete")
             val uniPostID = data.getInt("uni_post_id")
             val commentNum = data.getInt("post_comment_num")
+            val followNum = data.getInt("post_follower_num")
+            val postTimestamp = data.getLong("post_create_time")
 
-            postListItem.add(PostItem(postID, postMsg, longMsg, isComplete, uniPostID, commentNum))
+
+            postListItem.add(
+                PostItem(
+                    postID,
+                    postMsg,
+                    longMsg,
+                    isComplete,
+                    uniPostID,
+                    commentNum,
+                    followNum,
+                    postTimestamp
+                )
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -90,12 +109,15 @@ data class PostItem(
     var isComplete: Boolean,
     val uniPostID: Int,
     val commentNum: Int,
-    var showMsg: String = shortMsg,
-
-    ) : Parcelable
+    val followNum: Int,
+    val postTimestamp: Long,
+    var showMsg: String = shortMsg
+) : Parcelable
 
 @Composable
-fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditPostScreen: () -> Unit){
+fun MainScreen(
+    navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditPostScreen: () -> Unit
+) {
     var postListItem by rememberSaveable { mutableStateOf(listOf<PostItem>()) }
     val context = LocalContext.current // 获取当前 Composable 的 Context
     val listState = rememberLazyListState()
@@ -103,7 +125,7 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditP
     val scope = rememberCoroutineScope()
     val interactionSource = remember { MutableInteractionSource() }
     val viewConfiguration = LocalViewConfiguration.current
-
+    val currentTimestamp = Instant.now().epochSecond
 
     // 默认值设为true，表示首次进入页面时执行
     val shouldExecuteEffect = rememberSaveable { mutableStateOf(true) }
@@ -155,6 +177,7 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditP
                         }
                     }
                 }
+
                 is PressInteraction.Cancel -> {
                     isLongClick = false
                 }
@@ -224,29 +247,49 @@ fun MainScreen(navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditP
                                     .fillMaxWidth()
                             ) {
                                 Row {
-                                    Text(
-                                        text = postItemOrigin.id.toString(),
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Row {
+                                        Text(
+                                            text = postItemOrigin.id.toString(),
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        if (currentTimestamp - postItemOrigin.postTimestamp > 86400) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "你可能错过", fontSize = 12.sp,
+                                                modifier = Modifier.alpha(0.6f)
+                                            )
+                                        }
+                                    }
+
                                     Spacer(Modifier.weight(1f))
+
                                     Row {
                                         Icon(
                                             Icons.Outlined.Notifications,
                                             contentDescription = "Comment",
-                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                            modifier = Modifier.align(Alignment.CenterVertically).size(20.dp)
                                         )
                                         Text(
                                             text = postItemOrigin.commentNum.toString(),
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Normal
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Icon(
+                                            Icons.Outlined.FavoriteBorder,
+                                            contentDescription = "Follow",
+                                            modifier = Modifier.align(Alignment.CenterVertically).size(20.dp)
+                                        )
+                                        Text(
+                                            text = postItemOrigin.followNum.toString(),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Normal
                                         )
                                     }
-
                                 }
 
                                 Text(text = postItemOrigin.showMsg)
-
                                 if (!postItemOrigin.isComplete) {
                                     Text(
                                         "...",
