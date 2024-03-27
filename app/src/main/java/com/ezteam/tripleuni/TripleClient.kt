@@ -37,13 +37,19 @@ class TripleClient {
         tempPostList = null
     }
 
-    private fun getList(): JSONObject? {
+    private fun getList(topic: String): JSONObject? {
+        var url = "https://api.tripleuni.com/v4/post/list/all.php"
+
         val token = this.token ?: return null
         val listData = FormBody.Builder().add("page", pageNum.toString()).add("token", token)
-            .add("language", "zh-CN").build()
-        val request =
-            Request.Builder().url("https://api.tripleuni.com/v4/post/list/all.php").post(listData)
-                .build()
+            .add("language", "zh-CN")
+
+        if (topic != "全部") {
+            url = "https://api.tripleuni.com/v4/post/list/topic.php"
+            listData.add("post_topic", topic)
+        }
+
+        val request = Request.Builder().url(url).post(listData.build()).build()
 
         try {
             client.newCall(request).execute().use { response ->
@@ -76,8 +82,7 @@ class TripleClient {
                 }
                 return null
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
             return null
         }
@@ -110,10 +115,10 @@ class TripleClient {
         }
     }
 
-    fun getTemp(): JSONObject? {
+    fun getTemp(topic: String): JSONObject? {
 
         if (tempPostList == null) {
-            tempPostList = getList()
+            tempPostList = getList(topic)
             isUpdate = true
         }
 
@@ -125,8 +130,8 @@ class TripleClient {
         return tempPostList
     }
 
-    fun updateTemp() {
-        tempPostList = getList()
+    fun updateTemp(topic: String) {
+        tempPostList = getList(topic)
         isUpdate = true
     }
 
@@ -176,21 +181,11 @@ class TripleClient {
     }
 
     fun postPoster(
-        content: String,
-        topic: String,
-        real: String,
-        public: String,
-        uni: String
+        content: String, topic: String, real: String, public: String, uni: String
     ): Boolean {
-        val postData = FormBody.Builder()
-            .add("post_msg", content)
-            .add("post_topic", topic)
-            .add("user_is_real_name", real)
-            .add("post_public", public)
-            .add("post_is_uni",uni)
-            .add("post_image", "[]")
-            .add("token", this.token!!)
-            .add("language", "zh-CN")
+        val postData = FormBody.Builder().add("post_msg", content).add("post_topic", topic)
+            .add("user_is_real_name", real).add("post_public", public).add("post_is_uni", uni)
+            .add("post_image", "[]").add("token", this.token!!).add("language", "zh-CN")
         val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/post.php")
             .post(postData.build()).build()
 
