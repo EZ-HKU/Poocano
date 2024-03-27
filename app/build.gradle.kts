@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id ("kotlin-parcelize")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -12,8 +12,8 @@ android {
         applicationId = "com.ezteam.tripleuni"
         minSdk = 28
         targetSdk = 34
-        versionCode = 11
-        versionName = "0.5.2"
+        versionCode = 12
+        versionName = "0.5.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

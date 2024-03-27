@@ -30,6 +30,8 @@ import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
@@ -82,8 +84,23 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
+import org.json.JSONObject
+import java.net.URL
 import java.time.Instant
 
+
+suspend fun getLatestVersion(): Int = withContext(Dispatchers.IO) {
+    try {
+        val jsonText =
+            URL("https://raw.githubusercontent.com/EZ-HKU/Poocano/main/app/release/output-metadata.json").readText()
+        val jsonObject = JSONObject(jsonText)
+        val versionCode = jsonObject.getJSONArray("elements").getJSONObject(0).getInt("versionCode")
+        versionCode // 返回值
+    } catch (e: Exception) {
+        e.printStackTrace()
+        -1 // 发生异常时返回-1或其他错误代码
+    }
+}
 
 fun extractPostMessages(postListItem: MutableList<PostItem>, topic: String): MutableList<PostItem> {
 
@@ -167,6 +184,7 @@ data class ProfileItem(
 fun MainScreen(
     navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditPostScreen: () -> Unit
 ) {
+
     var postListItem by rememberSaveable { mutableStateOf(listOf<PostItem>()) }
     var profileListItem by rememberSaveable { mutableStateOf(listOf<ProfileItem>()) }
     val context = LocalContext.current // 获取当前 Composable 的 Context
@@ -181,6 +199,8 @@ fun MainScreen(
     var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+
 
     val annotatedLinkString = buildAnnotatedString {
         withStyle(
@@ -214,7 +234,13 @@ fun MainScreen(
         if (shouldExecuteEffect.value) {
             shouldExecuteEffect.value = false
             Toast.makeText(context, "获取帖子列表", Toast.LENGTH_SHORT).show()
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            val versionCode = packageInfo.longVersionCode
             CoroutineScope(Dispatchers.IO).launch {
+                val latestVersionCode = getLatestVersion()
+                if (latestVersionCode > versionCode.toInt()) {
+                    showUpdateDialog = true
+                }
                 postListItem =
                     extractPostMessages(postListItem.toMutableList(), sideItems[selectedItemIndex])
                 client.updateTemp(sideItems[selectedItemIndex])
@@ -222,6 +248,31 @@ fun MainScreen(
             }
         }
     }
+    if (showUpdateDialog) {
+        AlertDialog(
+            title = { Text("发现新版本") },
+            text = { Text("请前往GitHub下载最新版本") },
+            onDismissRequest = { },
+            confirmButton = {
+                Button(onClick = {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://github.com/EZ-HKU/Poocano/releases/latest")
+                    )
+                    context.startActivity(intent)
+                    showUpdateDialog = false // 更新对话框显示状态以关闭对话框
+                }) {
+                    Text("更新")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showUpdateDialog = false }) {
+                    Text("取消")
+                }
+            },
+        )
+    }
+
 
     // 滚动到底部时加载更多帖子
     LaunchedEffect(listState) {
@@ -371,47 +422,10 @@ fun MainScreen(
                     }
                     Icon(Icons.Filled.MoreVert, contentDescription = "More")
                 }
-                if (showAboutDialog) {
-                    Dialog(onDismissRequest = { showAboutDialog = false }) {
-                        Card(
-                            shape = RoundedCornerShape(8.dp), modifier = Modifier.padding(16.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text("Poocano", style = MaterialTheme.typography.titleLarge)
-                                Text(
-                                    "v0.5.2",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    modifier = Modifier.alpha(0.6f)
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    "TripleUni非官方Android客户端",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    "我们注重你的个人隐私，因此我们不会记录你的TripleUni资料，包括账号，密码，你发送的帖子，私信等，所有数据均获取自TripleUni",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                ClickableText(text = annotatedLinkString, onClick = { offset ->
-                                    annotatedLinkString.getStringAnnotations(
-                                        tag = "URL", start = offset, end = offset
-                                    ).firstOrNull()?.let { annotation ->
-                                            val intent = Intent(
-                                                Intent.ACTION_VIEW, Uri.parse(annotation.item)
-                                            )
-                                            context.startActivity(intent)
-                                        }
-                                })
-                            }
-                        }
-                    }
-                }
+
 
             })
+
 
         }, floatingActionButton = {
             FloatingActionButton(interactionSource = interactionSource, onClick = { }) {
@@ -538,7 +552,44 @@ fun MainScreen(
             }
         })
     }
-
+    if (showAboutDialog) {
+        Dialog(onDismissRequest = { showAboutDialog = false }) {
+            Card(
+                shape = RoundedCornerShape(8.dp), modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text("Poocano", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "v0.5.2",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.alpha(0.6f)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "TripleUni非官方Android客户端", style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "我们注重你的个人隐私，因此我们不会记录你的TripleUni资料，包括账号，密码，你发送的帖子，私信等，所有数据均获取自TripleUni",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ClickableText(text = annotatedLinkString, onClick = { offset ->
+                        annotatedLinkString.getStringAnnotations(
+                            tag = "URL", start = offset, end = offset
+                        ).firstOrNull()?.let { annotation ->
+                            val intent = Intent(
+                                Intent.ACTION_VIEW, Uri.parse(annotation.item)
+                            )
+                            context.startActivity(intent)
+                        }
+                    })
+                }
+            }
+        }
+    }
 }
 
 
