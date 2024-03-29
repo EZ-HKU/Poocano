@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Create
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
@@ -126,6 +127,7 @@ fun extractPostMessages(postListItem: MutableList<PostItem>, topic: String): Mut
             val commentNum = data.getInt("post_comment_num")
             val followNum = data.getInt("post_follower_num")
             val postTimestamp = data.getLong("post_create_time")
+            val isFollowing = data.getBoolean("is_following")
 
 
             postListItem.add(
@@ -137,7 +139,9 @@ fun extractPostMessages(postListItem: MutableList<PostItem>, topic: String): Mut
                     uniPostID,
                     commentNum,
                     followNum,
-                    postTimestamp
+                    postTimestamp,
+                    postMsg,
+                    isFollowing
                 )
             )
         } catch (e: Exception) {
@@ -171,7 +175,8 @@ data class PostItem(
     val commentNum: Int,
     val followNum: Int,
     val postTimestamp: Long,
-    var showMsg: String = shortMsg
+    var showMsg: String = shortMsg,
+    var isFollowing: Boolean
 ) : Parcelable
 
 @Parcelize
@@ -182,7 +187,7 @@ data class ProfileItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    navigateToPostScreen: (Int, Int, String) -> Unit, navigateToEditPostScreen: () -> Unit
+    navigateToPostScreen: (Int, Int, String, String) -> Unit, navigateToEditPostScreen: () -> Unit
 ) {
 
     var postListItem by rememberSaveable { mutableStateOf(listOf<PostItem>()) }
@@ -474,7 +479,8 @@ fun MainScreen(
                                     if (postItemOrigin.isComplete) navigateToPostScreen(
                                         postItemOrigin.uniPostID,
                                         postItemOrigin.id,
-                                        postItemOrigin.longMsg
+                                        postItemOrigin.longMsg,
+                                        postItemOrigin.isFollowing.toString()
                                     )
                                     postItemOrigin = postItemOrigin.copy(
                                         isComplete = true, showMsg = postItemOrigin.longMsg
@@ -520,13 +526,25 @@ fun MainScreen(
                                                 fontWeight = FontWeight.Normal
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Icon(
-                                                Icons.Outlined.FavoriteBorder,
-                                                contentDescription = "Follow",
-                                                modifier = Modifier
-                                                    .align(Alignment.CenterVertically)
-                                                    .size(20.dp)
-                                            )
+                                            if (postItemOrigin.isFollowing) {
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Icon(
+                                                    Icons.Outlined.Favorite,
+                                                    contentDescription = "Follow",
+                                                    modifier = Modifier
+                                                        .align(Alignment.CenterVertically)
+                                                        .size(20.dp)
+                                                )
+                                            } else {
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Icon(
+                                                    Icons.Outlined.FavoriteBorder,
+                                                    contentDescription = "Follow",
+                                                    modifier = Modifier
+                                                        .align(Alignment.CenterVertically)
+                                                        .size(20.dp)
+                                                )
+                                            }
                                             Text(
                                                 text = postItemOrigin.followNum.toString(),
                                                 fontSize = 16.sp,
@@ -598,5 +616,5 @@ fun MainScreen(
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MainScreen(navigateToPostScreen = { _, _, _ -> }, navigateToEditPostScreen = {})
+    MainScreen(navigateToPostScreen = { _, _, _, _ -> }, navigateToEditPostScreen = {})
 }

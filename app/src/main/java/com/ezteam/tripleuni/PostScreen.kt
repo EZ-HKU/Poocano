@@ -18,8 +18,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -262,13 +266,16 @@ fun ReplyDialog(onDismissRequest: () -> Unit, postID: String, commentListItem: C
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostScreen(
-    postID: String, id: String, longMsg: String,
-    navController: NavController
+    postID: String, id: String, longMsg: String, navController: NavController
 ) { // postID: uni_post_id, id: tree_id, longMsg: postMsg
     val decodedId = URLDecoder.decode(id, StandardCharsets.UTF_8.toString())
     val decodedLongMsg = URLDecoder.decode(longMsg, StandardCharsets.UTF_8.toString())
     var commentListItem by remember { mutableStateOf(CommentListItem()) }
     var showDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+    var showReportDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
 
 
     LaunchedEffect(Unit) {
@@ -291,7 +298,36 @@ fun PostScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* doSomething() */ }) {
+                    IconButton(onClick = { showMenu = true }) {
+                        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            DropdownMenuItem(text = { Text(text = "围观") }, onClick = {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    val responseCode = client.followPost(postID)
+                                    when (responseCode) {
+                                        200 -> {
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "开始围观", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                        201 -> {
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "取消围观", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                        else -> {
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "围观失败", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                }
+                                showMenu = false
+                            })
+                            DropdownMenuItem(text = { Text(text = "举报") }, onClick = {
+                                showReportDialog = true
+                                showMenu = false
+                            })
+                        }
                         Icon(Icons.Filled.MoreVert, contentDescription = "More")
                     }
                 }
@@ -322,6 +358,38 @@ fun PostScreen(
             }
         }
     })
+
+    if (showReportDialog) {
+        AlertDialog(
+            title = { Text("举报该树洞") },
+            text = { Text("是否对$decodedId 进行举报操作") },
+            onDismissRequest = { },
+            confirmButton = {
+                Button(onClick = {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val isSuccess = client.reportPost(postID, -1, decodedLongMsg, "来自Poocano用户的举报")
+                        if (isSuccess) {
+                            withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "举报成功", Toast.LENGTH_SHORT).show()
+                            }
+                            showReportDialog = false
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "举报失败", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showReportDialog = false }) {
+                    Text("取消")
+                }
+            },
+        )
+    }
 }
 
 

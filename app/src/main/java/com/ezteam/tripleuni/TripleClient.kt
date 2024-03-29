@@ -230,4 +230,49 @@ class TripleClient {
             return false
         }
     }
+
+    fun reportPost(
+        uniPostId: String, commentOrder: Int, commentMsg: String, reportMsg: String
+    ): Boolean {
+        val token = this.token ?: return false
+        val reportData = FormBody.Builder().add("uni_post_id", uniPostId)
+            .add("comment_order", commentOrder.toString()).add("comment_msg", commentMsg)
+            .add("report_msg", reportMsg).add("token", token).add("language", "zh-CN").build()
+
+        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/report.php")
+            .post(reportData).build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw Exception("Unexpected code $response")
+                val responseData = JSONObject(response.body.string())
+                return responseData.getInt("code") == 200
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    fun followPost(uniPostId: String): Int {
+        val token = this.token ?: return 0
+        val followData = FormBody.Builder().add("uni_post_id", uniPostId)
+            .add("token", token).add("language", "zh-CN")
+            .build()
+
+        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/follow.php")
+            .post(followData).build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw Exception("Unexpected code $response")
+                val responseData = JSONObject(response.body.string())
+
+                return responseData.getInt("code")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return 0
+        }
+    }
 }

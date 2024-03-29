@@ -59,19 +59,20 @@ fun MyApp() {
         }
         composable("main") {
             MainScreen(
-                navigateToPostScreen = { uniPostId, id, longMsg ->
+                navigateToPostScreen = { uniPostId, id, longMsg, isFollowing ->
                     val encodedPostId =
                         URLEncoder.encode(uniPostId.toString(), StandardCharsets.UTF_8.toString())
                     val encodedId = URLEncoder.encode(id.toString(), StandardCharsets.UTF_8.toString())
                     val encodedLongMsg = URLEncoder.encode(longMsg, StandardCharsets.UTF_8.toString())
-                    navController.navigate("post/$encodedPostId/$encodedId/$encodedLongMsg")
+                    val encodedIsFollowing = URLEncoder.encode(isFollowing, StandardCharsets.UTF_8.toString())
+                    navController.navigate("post/$encodedPostId/$encodedId/$encodedLongMsg/$encodedIsFollowing")
                 },
                 navigateToEditPostScreen = {
                     navController.navigate("edit")
                 }
             )
         }
-        composable("post/{encodedPostId}/{encodedId}/{encodedLongMsg}") {
+        composable("post/{encodedPostId}/{encodedId}/{encodedLongMsg}/{encodedIsFollowing}") {
             val postID = it.arguments?.getString("encodedPostId") ?: ""
             val id = it.arguments?.getString("encodedId") ?: ""
             var longMsg = it.arguments?.getString("encodedLongMsg") ?: ""
