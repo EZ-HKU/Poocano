@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -462,112 +463,13 @@ fun MainScreen(
                         }
 
                     }) {
-                    LazyColumn(
-                        state = listState, modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp, 0.dp)
-                    ) {
-                        items(postListItem) { postItem ->
-
-                            var postItemOrigin by remember { mutableStateOf(postItem) }
-
-                            Card(modifier = Modifier
-                                .padding(vertical = 8.dp)
-                                .fillMaxWidth()
-                                .clickable {
-
-                                    if (postItemOrigin.isComplete) navigateToPostScreen(
-                                        postItemOrigin.uniPostID,
-                                        postItemOrigin.id,
-                                        postItemOrigin.longMsg,
-                                        postItemOrigin.isFollowing.toString()
-                                    )
-                                    postItemOrigin = postItemOrigin.copy(
-                                        isComplete = true, showMsg = postItemOrigin.longMsg
-                                    )
-                                }) {
-
-                                Column(
-                                    modifier = Modifier
-                                        .padding(16.dp)
-                                        .fillMaxWidth()
-                                ) {
-                                    Row {
-                                        Row {
-                                            Text(
-                                                text = postItemOrigin.id.toString(),
-                                                fontSize = 18.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-
-                                            if (selectedItemIndex == 0 && currentTimestamp - postItemOrigin.postTimestamp > 86400) {
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = "你可能错过",
-                                                    fontSize = 12.sp,
-                                                    modifier = Modifier.alpha(0.6f)
-                                                )
-                                            }
-                                        }
-
-                                        Spacer(Modifier.weight(1f))
-
-                                        Row {
-                                            Icon(
-                                                Icons.Outlined.Notifications,
-                                                contentDescription = "Comment",
-                                                modifier = Modifier
-                                                    .align(Alignment.CenterVertically)
-                                                    .size(20.dp)
-                                            )
-                                            Text(
-                                                text = postItemOrigin.commentNum.toString(),
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Normal
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            if (postItemOrigin.isFollowing) {
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Icon(
-                                                    Icons.Outlined.Favorite,
-                                                    contentDescription = "Follow",
-                                                    modifier = Modifier
-                                                        .align(Alignment.CenterVertically)
-                                                        .size(20.dp)
-                                                )
-                                            } else {
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Icon(
-                                                    Icons.Outlined.FavoriteBorder,
-                                                    contentDescription = "Follow",
-                                                    modifier = Modifier
-                                                        .align(Alignment.CenterVertically)
-                                                        .size(20.dp)
-                                                )
-                                            }
-                                            Text(
-                                                text = postItemOrigin.followNum.toString(),
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Normal
-                                            )
-                                        }
-                                    }
-
-                                    Text(text = postItemOrigin.showMsg)
-                                    if (!postItemOrigin.isComplete) {
-                                        Text(
-                                            "...",
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.align(
-                                                Alignment.End
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    PostLazyColumn(
+                        selectedItemIndex,
+                        currentTimestamp,
+                        postListItem,
+                        listState,
+                        navigateToPostScreen
+                    )
                 }
             }
         })
@@ -606,6 +508,123 @@ fun MainScreen(
                             context.startActivity(intent)
                         }
                     })
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun PostLazyColumn(
+    selectedItemIndex: Int,
+    currentTimestamp: Long,
+    postListItem: List<PostItem>,
+    listState: LazyListState,
+    navigateToPostScreen: (Int, Int, String, String) -> Unit
+) {
+    LazyColumn(
+        state = listState, modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp, 0.dp)
+    ) {
+        items(postListItem) { postItem ->
+
+            var postItemOrigin by remember { mutableStateOf(postItem) }
+
+            Card(modifier = Modifier
+                .padding(vertical = 8.dp)
+                .fillMaxWidth()
+                .clickable {
+
+                    if (postItemOrigin.isComplete) navigateToPostScreen(
+                        postItemOrigin.uniPostID,
+                        postItemOrigin.id,
+                        postItemOrigin.longMsg,
+                        postItemOrigin.isFollowing.toString()
+                    )
+                    postItemOrigin = postItemOrigin.copy(
+                        isComplete = true, showMsg = postItemOrigin.longMsg
+                    )
+                }) {
+
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                ) {
+                    Row {
+                        Row {
+                            Text(
+                                text = postItemOrigin.id.toString(),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            if (selectedItemIndex == 0 && currentTimestamp - postItemOrigin.postTimestamp > 86400) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "你可能错过",
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.alpha(0.6f)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.weight(1f))
+
+                        Row {
+                            Icon(
+                                Icons.Outlined.Notifications,
+                                contentDescription = "Comment",
+                                modifier = Modifier
+                                    .align(Alignment.CenterVertically)
+                                    .size(20.dp)
+                            )
+                            Text(
+                                text = postItemOrigin.commentNum.toString(),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            if (postItemOrigin.isFollowing) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    Icons.Outlined.Favorite,
+                                    contentDescription = "Follow",
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .size(20.dp)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    Icons.Outlined.FavoriteBorder,
+                                    contentDescription = "Follow",
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .size(20.dp)
+                                )
+                            }
+                            Text(
+                                text = postItemOrigin.followNum.toString(),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+                    }
+
+                    Text(text = postItemOrigin.showMsg)
+                    if (!postItemOrigin.isComplete) {
+                        Text(
+                            "...",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(
+                                Alignment.End
+                            )
+                        )
+                    }
                 }
             }
         }
