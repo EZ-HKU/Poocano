@@ -6,6 +6,8 @@ import okhttp3.Request
 import org.json.JSONObject
 
 class TripleClient {
+    private val domain = "uuunnniii.com"
+
     private val client = OkHttpClient()
     private var ifLogin = false
     private var email: String? = null
@@ -38,14 +40,14 @@ class TripleClient {
     }
 
     private fun getList(topic: String): JSONObject? {
-        var url = "https://api.tripleuni.com/v4/post/list/all.php"
+        var url = "https://api.$domain/v4/post/list/all.php"
 
         val token = this.token ?: return null
         val listData = FormBody.Builder().add("page", pageNum.toString()).add("token", token)
             .add("language", "zh-CN")
 
         if (topic != "全部") {
-            url = "https://api.tripleuni.com/v4/post/list/topic.php"
+            url = "https://api.$domain/v4/post/list/topic.php"
             listData.add("post_topic", topic)
         }
 
@@ -70,7 +72,7 @@ class TripleClient {
     fun getProfile(): JSONObject? {
         val token = this.token ?: return null
         val profileData = FormBody.Builder().add("token", token).add("language", "zh-CN").build()
-        val request = Request.Builder().url("https://api.tripleuni.com/v4/user/profile/get.php")
+        val request = Request.Builder().url("https://api.$domain/v4/user/profile/get.php")
             .post(profileData).build()
 
         try {
@@ -95,7 +97,7 @@ class TripleClient {
         val detailData =
             FormBody.Builder().add("uni_post_id", id).add("token", token).add("language", "zh-CN")
                 .build()
-        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/get.php")
+        val request = Request.Builder().url("https://api.$domain/v4/post/single/get.php")
             .post(detailData).build()
 
         try {
@@ -139,7 +141,7 @@ class TripleClient {
         this.email = email
         val emailData = FormBody.Builder().add("user_email", email).add("language", "zh-CN").build()
         val request =
-            Request.Builder().url("https://api.tripleuni.com/v4/user/register/web/email.php")
+            Request.Builder().url("https://api.$domain/v4/user/register/web/email.php")
                 .post(emailData).build()
 
         try {
@@ -161,7 +163,7 @@ class TripleClient {
     fun sendComment(content: String, postId: String): Boolean {
         val commentData = FormBody.Builder().add("uni_post_id", postId).add("comment_msg", content)
             .add("user_is_real_name", "false").add("token", this.token!!).add("language", "zh-CN")
-        val request = Request.Builder().url("https://api.tripleuni.com/v4/comment/post.php")
+        val request = Request.Builder().url("https://api.$domain/v4/comment/post.php")
             .post(commentData.build()).build()
 
         try {
@@ -186,7 +188,7 @@ class TripleClient {
         val postData = FormBody.Builder().add("post_msg", content).add("post_topic", topic)
             .add("user_is_real_name", real).add("post_public", public).add("post_is_uni", uni)
             .add("post_image", "[]").add("token", this.token!!).add("language", "zh-CN")
-        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/post.php")
+        val request = Request.Builder().url("https://api.$domain/v4/post/single/post.php")
             .post(postData.build()).build()
 
         try {
@@ -210,7 +212,7 @@ class TripleClient {
             .add("user_school_label", storedData.getString("user_school_label"))
             .add("language", "zh-CN").build()
         val request =
-            Request.Builder().url("https://api.tripleuni.com/v4/user/register/web/verify.php")
+            Request.Builder().url("https://api.$domain/v4/user/register/web/verify.php")
                 .post(verifyData).build()
 
         try {
@@ -239,7 +241,7 @@ class TripleClient {
             .add("comment_order", commentOrder.toString()).add("comment_msg", commentMsg)
             .add("report_msg", reportMsg).add("token", token).add("language", "zh-CN").build()
 
-        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/report.php")
+        val request = Request.Builder().url("https://api.$domain/v4/post/single/report.php")
             .post(reportData).build()
 
         try {
@@ -260,7 +262,7 @@ class TripleClient {
             .add("token", token).add("language", "zh-CN")
             .build()
 
-        val request = Request.Builder().url("https://api.tripleuni.com/v4/post/single/follow.php")
+        val request = Request.Builder().url("https://api.$domain/v4/post/single/follow.php")
             .post(followData).build()
 
         try {

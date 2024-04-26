@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "com.ezteam.tripleuni"
-    compileSdk = 34
+    compileSdkPreview = "VanillaIceCream"
 
     defaultConfig {
         applicationId = "com.ezteam.tripleuni"
         minSdk = 28
         targetSdk = 34
-        versionCode = 13
-        versionName = "0.5.4"
+        versionCode = 14
+        versionName = "0.5.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -30,11 +30,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true

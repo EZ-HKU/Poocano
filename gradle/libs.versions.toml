@@ -1,17 +1,17 @@
 [versions]
-accompanistSwiperefresh = "0.18.0"
-agp = "8.5.0-alpha02"
+accompanistSwiperefresh = "0.34.0"
+agp = "8.5.0-alpha06"
 kotlin = "1.9.23"
-coreKtx = "1.12.0"
+coreKtx = "1.13.0"
 junit = "5.10.2"
 junitVersion = "1.10.2"
 espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.7.0"
-activityCompose = "1.8.2"
-composeBom = "2024.03.00"
+activityCompose = "1.9.0"
+composeBom = "2024.04.01"
 material3 = "1.2.1"
 navigationFragment = "2.7.7"
-okhttp = "5.0.0-alpha.12"
+okhttp = "5.0.0-alpha.14"
 
 [libraries]
 accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefresh" }
@@ -33,7 +33,7 @@ androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version = "1.6.6" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
