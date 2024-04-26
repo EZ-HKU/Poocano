@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "com.ezteam.tripleuni"
-    compileSdkPreview = "VanillaIceCream"
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.ezteam.tripleuni"
         minSdk = 28
         targetSdk = 34
-        versionCode = 14
-        versionName = "0.5.5"
+        versionCode = 15
+        versionName = "0.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
