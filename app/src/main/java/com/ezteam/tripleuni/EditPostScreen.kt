@@ -1,17 +1,16 @@
 package com.ezteam.tripleuni
 
+import android.R.attr.maxHeight
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
@@ -99,7 +98,7 @@ fun EditPostScreen(navController: NavController) {
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
             }
         }, content = { innerPadding ->
-            BoxWithConstraints(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -112,7 +111,8 @@ fun EditPostScreen(navController: NavController) {
                         onValueChange = { postText = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(screenHeight / 6, screenHeight / 2),
+//                            .heightIn(screenHeight / 6, screenHeight / 2)
+                        ,
                         placeholder = { Text("输入内容") })
 
                     Spacer(modifier = Modifier.height(16.dp))

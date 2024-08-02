@@ -4,6 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Parcelable
 import android.widget.Toast
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -35,6 +38,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -77,6 +81,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.ezteam.tripleuni.MyAppGlobals.client
+import com.ezteam.tripleuni.data.Post
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.CoroutineScope
@@ -104,7 +109,7 @@ suspend fun getLatestVersion(): Int = withContext(Dispatchers.IO) {
     }
 }
 
-fun extractPostMessages(postListItem: MutableList<PostItem>, topic: String): MutableList<PostItem> {
+fun extractPostMessages(postListItem: MutableList<Post>, topic: String): MutableList<Post> {
 
     // 将字符串解析为JSONObject
     val jsonObject = client.getTemp(topic) ?: return postListItem
@@ -132,7 +137,7 @@ fun extractPostMessages(postListItem: MutableList<PostItem>, topic: String): Mut
 
 
             postListItem.add(
-                PostItem(
+                Post(
                     postID,
                     postMsg,
                     longMsg,
@@ -167,31 +172,16 @@ fun getProfile(profileListItem: MutableList<ProfileItem>): MutableList<ProfileIt
 }
 
 @Parcelize
-data class PostItem(
-    val id: Int,
-    val shortMsg: String,
-    val longMsg: String,
-    var isComplete: Boolean,
-    val uniPostID: Int,
-    val commentNum: Int,
-    val followNum: Int,
-    val postTimestamp: Long,
-    var showMsg: String = shortMsg,
-    var isFollowing: Boolean
-) : Parcelable
-
-@Parcelize
 data class ProfileItem(
     val followCount: Int, val postCount: Int, val schoolLabel: String, val serial: String
 ) : Parcelable
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navigateToPostScreen: (Int, Int, String, String) -> Unit, navigateToEditPostScreen: () -> Unit
 ) {
 
-    var postListItem by rememberSaveable { mutableStateOf(listOf<PostItem>()) }
+    var postListItem by rememberSaveable { mutableStateOf(listOf<Post>()) }
     var profileListItem by rememberSaveable { mutableStateOf(listOf<ProfileItem>()) }
     val context = LocalContext.current // 获取当前 Composable 的 Context
     val listState = rememberLazyListState()
@@ -280,7 +270,6 @@ fun MainScreen(
             },
         )
     }
-
 
     // 滚动到底部时加载更多帖子
     LaunchedEffect(listState) {
@@ -409,32 +398,11 @@ fun MainScreen(
         }
     }, drawerState = drawerState) {
         Scaffold(topBar = {
-            TopAppBar(title = { Text("Poocano") }, navigationIcon = {
-                IconButton(onClick = {
-                    scope.launch {
-                        drawerState.open()
-                    }
-                }) {
-                    Icon(Icons.Filled.Menu, contentDescription = "Menu")
-                }
-            }, actions = {
-                IconButton(onClick = { }) {
-                    Icon(Icons.Filled.Search, contentDescription = "Search")
-                }
-                IconButton(onClick = { showMenu = true }) {
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(text = { Text(text = "关于") }, onClick = {
-                            showAboutDialog = true
-                            showMenu = false
-                        })
-                    }
-                    Icon(Icons.Filled.MoreVert, contentDescription = "More")
-                }
-
-
-            })
-
-
+            TopAppBar(scope = scope,
+                drawerState = drawerState,
+                showMenu = showMenu,
+                onShowMenuChange = { showMenu = it },
+                onShowAboutDialogChange = { showAboutDialog = it })
         }, floatingActionButton = {
             FloatingActionButton(interactionSource = interactionSource, onClick = { }) {
                 Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Top")
@@ -519,7 +487,7 @@ fun MainScreen(
 fun PostLazyColumn(
     selectedItemIndex: Int,
     currentTimestamp: Long,
-    postListItem: List<PostItem>,
+    postListItem: List<Post>,
     listState: LazyListState,
     navigateToPostScreen: (Int, Int, String, String) -> Unit
 ) {
@@ -552,66 +520,26 @@ fun PostLazyColumn(
                     modifier = Modifier
                         .padding(16.dp)
                         .fillMaxWidth()
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        )
                 ) {
                     Row {
-                        Row {
-                            Text(
-                                text = postItemOrigin.id.toString(),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            if (selectedItemIndex == 0 && currentTimestamp - postItemOrigin.postTimestamp > 86400) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "你可能错过",
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.alpha(0.6f)
-                                )
-                            }
-                        }
-
+                        PostNum(
+                            selectedItemIndex,
+                            currentTimestamp,
+                            postItemOrigin.postTimestamp,
+                            postItemOrigin.id
+                        )
                         Spacer(Modifier.weight(1f))
-
-                        Row {
-                            Icon(
-                                Icons.Outlined.Notifications,
-                                contentDescription = "Comment",
-                                modifier = Modifier
-                                    .align(Alignment.CenterVertically)
-                                    .size(20.dp)
-                            )
-                            Text(
-                                text = postItemOrigin.commentNum.toString(),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Normal
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            if (postItemOrigin.isFollowing) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(
-                                    Icons.Outlined.Favorite,
-                                    contentDescription = "Follow",
-                                    modifier = Modifier
-                                        .align(Alignment.CenterVertically)
-                                        .size(20.dp)
-                                )
-                            } else {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(
-                                    Icons.Outlined.FavoriteBorder,
-                                    contentDescription = "Follow",
-                                    modifier = Modifier
-                                        .align(Alignment.CenterVertically)
-                                        .size(20.dp)
-                                )
-                            }
-                            Text(
-                                text = postItemOrigin.followNum.toString(),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Normal
-                            )
-                        }
+                        PostState(
+                            postItemOrigin.commentNum,
+                            postItemOrigin.followNum,
+                            postItemOrigin.isFollowing
+                        )
                     }
 
                     Text(text = postItemOrigin.showMsg)
@@ -628,6 +556,104 @@ fun PostLazyColumn(
                 }
             }
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopAppBar(
+    scope: CoroutineScope,
+    drawerState: DrawerState,
+    showMenu: Boolean,
+    onShowMenuChange: (Boolean) -> Unit,
+    onShowAboutDialogChange: (Boolean) -> Unit
+) {
+
+    TopAppBar(title = { Text("Poocano") }, navigationIcon = {
+        IconButton(onClick = {
+            scope.launch {
+                drawerState.open()
+            }
+        }) {
+            Icon(Icons.Filled.Menu, contentDescription = "Menu")
+        }
+    }, actions = {
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(Icons.Filled.Search, contentDescription = "Search")
+        }
+        IconButton(onClick = { onShowMenuChange(true) }) {
+            DropdownMenu(expanded = showMenu, onDismissRequest = { onShowMenuChange(false) }) {
+                DropdownMenuItem(text = { Text(text = "关于") }, onClick = {
+                    onShowAboutDialogChange(true)
+                    onShowMenuChange(false)
+                })
+            }
+            Icon(Icons.Filled.MoreVert, contentDescription = "More")
+        }
+    })
+}
+
+@Composable
+fun PostNum(
+    selectedItemIndex: Int,
+    currentTimestamp: Long,
+    postTimestamp: Long,
+    postId: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        Text(
+            text = postId.toString(), fontSize = 18.sp, fontWeight = FontWeight.Bold
+        )
+
+        if (selectedItemIndex == 0 && currentTimestamp - postTimestamp > 86400) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "你可能错过", fontSize = 12.sp, modifier = Modifier.alpha(0.6f)
+            )
+        }
+    }
+}
+
+@Composable
+fun PostState(
+    commentNum: Int, followNum: Int, isFollowing: Boolean, modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        Icon(
+            Icons.Outlined.Notifications,
+            contentDescription = "Comment",
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .size(20.dp)
+        )
+        Text(
+            text = commentNum.toString(), fontSize = 16.sp, fontWeight = FontWeight.Normal
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        if (isFollowing) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                Icons.Outlined.Favorite,
+                contentDescription = "Follow",
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .size(20.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                Icons.Outlined.FavoriteBorder,
+                contentDescription = "Follow",
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .size(20.dp)
+            )
+        }
+        Text(
+            text = followNum.toString(), fontSize = 16.sp, fontWeight = FontWeight.Normal
+        )
     }
 }
 
