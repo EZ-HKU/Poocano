@@ -4,8 +4,6 @@ agp = "8.5.2"
 featureDelivery = "2.1.0"
 kotlin = "2.0.0"
 coreKtx = "1.13.1"
-junit = "5.10.2"
-junitVersion = "1.10.2"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.5"
 activityCompose = "1.9.2"
@@ -26,8 +24,8 @@ androidx-navigation-ui = { module = "androidx.navigation:navigation-ui", version
 androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigationFragment" }
 feature-delivery = { module = "com.google.android.play:feature-delivery", version.ref = "featureDelivery" }
 feature-delivery-ktx = { module = "com.google.android.play:feature-delivery-ktx", version.ref = "featureDelivery" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+junit = { group = "junit", name = "junit", version = "4.13.2" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version = "1.2.1" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
