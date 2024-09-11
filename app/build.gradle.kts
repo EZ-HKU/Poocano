@@ -12,9 +12,9 @@ android {
     defaultConfig {
         applicationId = "com.ezteam.tripleuni"
         minSdk = 28
-        targetSdk = 34
-        versionCode = 15
-        versionName = "0.6.0"
+        targetSdk = 35
+        versionCode = 16
+        versionName = "0.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -71,8 +71,6 @@ dependencies {
         implementation(libs.androidx.navigation.compose)
     }
 
-
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -84,6 +82,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.accompanist.swiperefresh)
     implementation (libs.material3)
+    implementation(libs.feature.delivery)
+    implementation(libs.feature.delivery.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
